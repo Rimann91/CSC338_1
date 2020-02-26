@@ -81,7 +81,7 @@ int main(){
       }
 
   }else{               //parent process
-    putmem(sum4(),4);
+    putmem(sum4(),4,shmid);
     wait(NULL);
   }
 
@@ -93,12 +93,15 @@ int main(){
     useconds = end.tv_usec - start.tv_usec;
     mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
     printf("Elapsed time: %ld milliseconds on pid=%d\n", mtime, pid); 
+    printf("value at register 1 is: %ld \n", *results);
+    printf("value at register 2 is: %ld \n", *(results+8));
   }
 
-  results = shmat(shmid, (void *)0, 0);
-  total = *results + (*results+8) + (*results+16) + (*results+24);
 
-  printf("Total sum of 1-2billion is: %ld\n",total);
+  //results = shmat(shmid, (void *)0, 0);
+  //total = *results + (*results+8) + (*results+16) + (*results+24);
+
+  //printf("Total sum of 1-2billion is: %ld\n",total);
   return 0;
 }
 
@@ -140,19 +143,22 @@ int sum4(){
 
 void putmem(long sum, int pos, int shmid){
   long* data;
+  long* container;
 
 
   /* attach to the segment to get a pointer to it: */
   data = shmat(shmid, (void *)0, 0);
-  data = data+(pos*8);
-  if (data == (int *)(-1)) {
+  container = data+(pos*8);
+  if (data == (long *)(-1)) {
       perror("shmat");
       exit(1);
   }
 
   /* read or modify the segment*/
   printf("writing to segment: \"%ld\"\n", sum);
-  memcpy(data, sum, 64);
+  //memcpy(data, sum, 64);
+  container = &sum;
+
 
     /* detach from the segment: */
   if (shmdt(data) == -1) {
